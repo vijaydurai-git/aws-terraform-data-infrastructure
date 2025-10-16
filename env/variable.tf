@@ -11,10 +11,13 @@ variable "confirm_dns_update" {
   default     = "no"
 }
 
-variable "enter_user_name_based_on_ami" {
+variable "enter_ami_name" {
   description = "Enter the username (e.g., 'ubuntu' or 'ec2-user'). The appropriate image will be selected based on your input."
 }
 
+variable "server_user" {
+
+}
 variable "exist_vpc_name" {
 }
 
@@ -31,12 +34,18 @@ variable "exist_private_subnet_name" {
 variable "ec2_ami_ids" {
 
   default = {
-    ubuntu   = "ami-0cb91c7de36eed2cb"
+    ubuntu22 = "ami-0d9a665f802ae6227" # Ubuntu 22.04 LTS in us-east-2 (Ohio)
+    ubuntu24 = "ami-0cb91c7de36eed2cb" # Ubuntu 24.04 LTS in us-east-2 (Ohio)
     ec2-user = "ami-0fc82f4dabc05670b"
+    ansible  = "ami-091b900d9ac24daeb" # Base image is ubuntu 22.04 LTS in us-east-2 (Ohio)
   }
 }
 
 
+
+variable "instance_type" {
+
+}
 
 variable "t2_nano_instance_type" {
 
@@ -50,35 +59,15 @@ variable "t2_micro_instance_type" {
 
 }
 
+variable "t3_micro_instance_type" {
+
+  default = "t3.micro"
+
+}
+
 variable "t3_small_instance_type" {
 
   default = "t3.small"
-
-}
-
-variable "t2_medium_instance_type" {
-
-  default = "t3.medium"
-
-}
-
-
-variable "t3a_xlarge_instance_type" {
-
-  default = "t3a.xlarge"
-
-}
-
-
-variable "c4_2xlarge_instance_type" {
-
-  default = "c4.2xlarge"
-
-}
-
-variable "c4_4xlarge_instance_type" {
-
-  default = "c4.4xlarge"
 
 }
 
@@ -94,3 +83,4 @@ variable "allowed_ports" {
 variable "instance_key_name" {
 
 }
+

@@ -1,5 +1,4 @@
 # Public_ec2_info
-
 resource "aws_instance" "instance" {
 
 
@@ -12,9 +11,12 @@ resource "aws_instance" "instance" {
   iam_instance_profile        = "admin"
 
   root_block_device {
-    volume_size           = var.instance_root_volume_size_in    
-    volume_type           = "gp3" 
-    delete_on_termination = true 
+    volume_size           = var.instance_root_volume_size_in
+    volume_type           = "gp3"
+    delete_on_termination = true
+    tags = {
+      Name = "${var.project_tag_in}-root-volume"
+    }
   }
 
 
@@ -33,7 +35,13 @@ resource "aws_instance" "instance" {
 
 
 
-  # Intha type provisioner touch la vachikanum nu try panni erukka avulotha
+  provisioner "file" {
+    source      = "${path.module}/../../scripts/crontab-e.sh"
+    destination = "crontab-e.sh"
+  }
+
+
+  # I used the local-exec provisioner to get in touch
 
 
   provisioner "local-exec" {
@@ -41,30 +49,31 @@ resource "aws_instance" "instance" {
   }
 
 
-  provisioner "local-exec" {
-    command = <<EOF
-      printf "Private IP: ${self.private_ip}\nUsername: ${var.linux_user_in}\n" > current_instance_info.txt
-    EOF
-  }
+  # provisioner "local-exec" {
+  #   command = <<EOF
+  #     printf "Private IP: ${self.private_ip}\nUsername: ${var.server_user_in}\n" > ${var.project_tag_in}_info.txt
+  #   EOF
+  # }
+
 
   connection {
     type        = "ssh"
-    user        = var.linux_user_in
-    private_key = file("/home/e1087/.ohio-key.pem")
+    user        = var.server_user_in
+    private_key = file("/home/e1087/.jkey.pem")
     host        = self.public_ip
   }
 
   provisioner "remote-exec" {
     inline = [
-      "sudo hostnamectl set-hostname ${var.project_tag_in}.vijaydurai3.site",
+      "sudo hostnamectl set-hostname ${var.project_tag_in}",
       "bash aws_cli.sh"
     ]
 
 
     connection {
       type        = "ssh"
-      user        = var.linux_user_in
-      private_key = file("/home/e1087/.ohio-key.pem")
+      user        = var.server_user_in
+      private_key = file("/home/e1087/.jkey.pem")
       host        = self.public_ip
     }
   }
@@ -95,8 +104,8 @@ resource "null_resource" "dns_re-entry" {
 
     connection {
       type        = "ssh"
-      user        = var.linux_user_in
-      private_key = file("/home/e1087/.ohio-key.pem")
+      user        = var.server_user_in
+      private_key = file("/home/e1087/.jkey.pem")
       host        = aws_instance.instance.public_ip
     }
 
@@ -104,5 +113,9 @@ resource "null_resource" "dns_re-entry" {
 
 }
 
-
-
+# Fetch the ENI and set the tag for it
+resource "aws_ec2_tag" "eni_tag" {
+  resource_id = aws_instance.instance.primary_network_interface_id
+  key         = "Name"
+  value       = "${var.project_tag_in}-eni"
+}

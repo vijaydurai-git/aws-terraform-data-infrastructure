@@ -1,9 +1,10 @@
 #!/bin/bash
 
-HOSTED_ZONE_ID="Z01154692EO6EZB483936"
-NEW_RECORD_NAME=$(hostname)
-NEW_IP_ADDRESS=$(curl ifconfig.me)
-TTL=300
+DOMAIN="vijaydurai.fun"
+HOSTED_ZONE_ID="Z001220415FTGILNV1E5J"
+NEW_RECORD_NAME="$(hostname).${DOMAIN}"
+NEW_IP_ADDRESS="$(dig +short myip.opendns.com @resolver1.opendns.com)"
+TTL=60
 
 # Add the new record to the existing set
 
@@ -24,13 +25,7 @@ NEW_RECORD='{
 
 # Create a temporary JSON file for the change batch
 
-# echo "{
-#   \"Changes\": [$NEW_RECORD]
-# }" > change-batch.json
-
 echo "{\"Changes\": [$NEW_RECORD]}" > change-batch.json
-
-
 
 # Use AWS CLI to change resource record sets
 

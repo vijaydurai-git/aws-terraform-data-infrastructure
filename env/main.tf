@@ -34,13 +34,11 @@ module "compute_module" {
   public_subnet_id_in          = module.vpc_module.public_subnet_id_out
   sg_id_in                     = module.sg_module.sg_id_out
   project_tag_in               = local.current_project_tag
-  instance_type_in             = var.t2_medium_instance_type
+  instance_type_in             = var.instance_type
   dns_entry_content_in         = local.dns_entry_content
   confirm_dns_update_in        = var.confirm_dns_update
-  ami_id_in                    = var.ec2_ami_ids["${var.enter_user_name_based_on_ami}"]
-  linux_user_in                = var.enter_user_name_based_on_ami
+  ami_id_in                    = var.ec2_ami_ids["${var.enter_ami_name}"]
+  server_user_in               = var.server_user
   instance_root_volume_size_in = var.instance_root_volume_size
   instance_key_name_in         = var.instance_key_name
-
 }
-
