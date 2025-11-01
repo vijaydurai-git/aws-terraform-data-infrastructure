@@ -17,6 +17,6 @@ if [ -f "$TFVARS_FILE" ]; then
 
     terraform apply  -var-file="$TFVARS_FILE"
 else
-    echo -e "\n❌ No \e[1;31m$WORKSPACE.tfvars\e[0m file found for workspace \e[1;34m$WORKSPACE\e[0m.\n"
+    echo -e "\nNo \e[1;31m$WORKSPACE.tfvars\e[0m file found for workspace \e[1;34m$WORKSPACE\e[0m.\n"
 fi
 
