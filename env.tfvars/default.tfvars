@@ -12,8 +12,14 @@ external_access           = true
 confirm_dns_update        = "no"
 
 
+ssh_users = {
+  # "username" = "ssh-rsa public_key"
+}
+
 # terraform workspace list
 # terraform workspace show
 # terraform workspace new <new workspace name>
 # terraform apply   --auto-approve -var-file="<exact var file>"   # or run shell file
 # terraform destroy --auto-approve -var-file="<exact var file>"   # or run shell file
+
+

@@ -28,6 +28,12 @@ module "sg_module" {
   project_tag_in   = local.current_project_tag
   allowed_ports_in = var.allowed_ports
 }
+
+module "iam_module" {
+  source         = "../modules/iam"
+  project_tag_in = local.current_project_tag
+}
+
 module "compute_module" {
 
   source                       = "../modules/compute"
@@ -42,4 +48,6 @@ module "compute_module" {
   instance_root_volume_size_in = var.instance_root_volume_size
   instance_key_name_in         = var.instance_key_name
   external_access_in           = var.external_access
+  ssh_users_in                 = var.ssh_users
+  iam_instance_profile_in      = module.iam_module.iam_instance_profile_name
 }

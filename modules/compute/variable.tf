@@ -16,3 +16,9 @@ variable "associate_public_ip_address" {
 
 variable "instance_root_volume_size_in" {}
 variable "external_access_in" {}
+variable "ssh_users_in" {
+  type    = map(string)
+  default = {}
+}
+
+variable "iam_instance_profile_in" {}

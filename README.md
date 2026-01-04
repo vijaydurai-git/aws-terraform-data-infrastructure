@@ -140,3 +140,18 @@ After a successful apply, Terraform prints:
 ## 📜 License
 This project is maintained for DevOps learning and automation.
 You can reuse and modify it for your own infrastructure setups.
+
+---
+
+## 🔑 Users and SSH Keys
+
+You can add multiple users and their SSH keys using the `ssh_users` variable. These users will be granted `sudo` access by default.
+
+### Example in `.tfvars`
+
+```hcl
+ssh_users = {
+  "vijaydurai" = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ..."
+  "newuser"    = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ..."
+}
+```

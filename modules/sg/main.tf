@@ -11,7 +11,7 @@ resource "aws_security_group" "sg" {
 
 
   lifecycle {
-        ignore_changes = all
+    ignore_changes = all
 
   }
 

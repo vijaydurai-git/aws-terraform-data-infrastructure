@@ -90,3 +90,9 @@ variable "external_access" {
   type        = bool
   default     = true
 }
+
+variable "ssh_users" {
+  description = "Map of username to public SSH key"
+  type        = map(string)
+  default     = {}
+}
