@@ -1,12 +1,7 @@
 output "instance_public_ip_out" {
-
-  value = aws_instance.instance.public_ip
-
+  value = var.external_access_in ? aws_instance.public_instance[0].public_ip : ""
 }
 
-
 output "instance_id_out" {
-
-  value = aws_instance.instance.id
-
+  value = var.external_access_in ? aws_instance.public_instance[0].id : aws_instance.private_instance[0].id
 }

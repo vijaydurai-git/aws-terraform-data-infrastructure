@@ -2,7 +2,11 @@
 
 This repository provisions AWS infrastructure (VPC, Security Groups, EC2 instances, etc.) using **Terraform** and modular design.
 
-It supports multiple **workspaces** (e.g., `dev`, `staging`, `prod`) and loads environment-specific variables dynamically using `.tfvars` files.
+## 🆕 Recent Updates
+
+- **Unified Script**: A single `terraform.sh` script now handles `plan`, `apply`, and `destroy` actions with automatic workspace detection.
+- **Public/Private Instances**: New `external_access` variable allows creating private-only instances (no public IP, no external access).
+- **Cleaner Repo**: `.gitignore` is updated to exclude sensitive `.tfvars` files (except `default.tfvars`).
 
 ---
 
@@ -14,31 +18,18 @@ It supports multiple **workspaces** (e.g., `dev`, `staging`, `prod`) and loads e
 │   ├── main.tf
 │   ├── outputs.tf
 │   ├── provider.tf
-│   ├── terraform-apply.sh
-│   ├── terraform-destroy.sh
+│   ├── terraform.sh       <-- Unified execution script
 │   └── variable.tf
 │
 ├── env.tfvars/
-│   ├── ansible.tfvars
 │   ├── default.tfvars
-│   ├── jfrog.tfvars
-│   ├── prod.tfvars
-│   ├── sonarqube.tfvars
-│   └── staging.tfvars
+│   ├── private.tfvars
+│   ├── public.tfvars
 │
 ├── modules/
 │   ├── compute/
-│   │   ├── main.tf
-│   │   ├── outputs.tf
-│   │   └── variable.tf
 │   ├── sg/
-│   │   ├── main.tf
-│   │   ├── outputs.tf
-│   │   └── variable.tf
 │   └── vpc/
-│       ├── main.tf
-│       ├── outputs.tf
-│       └── variable.tf
 │
 ├── scripts/
 │   ├── aws_cli.sh
@@ -52,14 +43,13 @@ It supports multiple **workspaces** (e.g., `dev`, `staging`, `prod`) and loads e
 
 ## ⚙️ How It Works
 
-Each environment (workspace) has its own `.tfvars` file under `compute/env.tfvars/`.
+Each environment (workspace) has its own `.tfvars` file under `env.tfvars/`.
 
-When you run `terraform-apply.sh`, the script:
+When you run `env/terraform.sh`, the script:
 1. Detects the current **Terraform workspace**.
-2. Automatically loads the corresponding `.tfvars` file.
-3. Proceeds with `terraform apply`.
-
-If the `.tfvars` file is missing, it will prompt you and safely exit.
+2. Automatically loads the corresponding `.tfvars` file (e.g., `env.tfvars/dev.tfvars`).
+3. Defaults to `env.tfvars/default.tfvars` if a specific file isn't found.
+4. Asks for confirmation before proceeding.
 
 ---
 
@@ -67,6 +57,7 @@ If the `.tfvars` file is missing, it will prompt you and safely exit.
 
 ### 1️⃣ Initialize Terraform
 ```bash
+cd env
 terraform init
 ```
 
@@ -80,58 +71,52 @@ terraform workspace list
 ```
 
 ### 3️⃣ Verify Your `.tfvars` File
-Make sure a matching `.tfvars` file exists in:
+Make sure a matching `.tfvars` file exists in `env.tfvars/`.
+
+---
+
+## ▶️ Use the Unified Script
+
+We provided a simple script `env/terraform.sh` to manage your infrastructure.
+
+### Plan
+```bash
+./terraform.sh plan
 ```
-compute/env.tfvars/<workspace>.tfvars
+
+### Apply
+```bash
+./terraform.sh apply
 ```
-Example:
-```
-compute/env.tfvars/dev.tfvars
+
+### Destroy
+```bash
+./terraform.sh destroy
 ```
 
 ---
 
-## ▶️ Apply Infrastructure
+## 🌍 Public vs Private Instances
 
-Run the automated shell script:
-```bash
-bash terraform-apply.sh
-```
-
-Or manually:
-```bash
-terraform apply --auto-approve -var-file="env.tfvars/dev.tfvars"
-```
-
----
-
-## 💣 Destroy Infrastructure
-
-Run the destroy shell script:
-```bash
-bash terraform-destroy.sh
-```
-
-Or manually:
-```bash
-terraform destroy --auto-approve -var-file="env.tfvars/dev.tfvars"
-```
-
----
-
-## 🧱 Example `.tfvars` File
+You can control whether an instance is **Public** or **Private** using the `external_access` variable in your `.tfvars` file.
 
 ```hcl
-# If any of these variables are left empty, Terraform will use defaults
-# from `variable.tf` or prompt for input.
+external_access = true  # Creates a Public Instance with Public IP & DNS entry
+external_access = false # Creates a Private Instance (Internal access only)
+```
 
+### Example `.tfvars`
+
+```hcl
 exist_vpc_name            = "source-vpc"
 exist_public_subnet_name  = "source-subnet-01"
 exist_private_subnet_name = "source-subnet-02"
 
 current_project_tag       = "dev-environment"
 instance_type             = "t2.micro"
-confirm_dns_update        = "no"
+confirm_dns_update        = "yes"  # Only runs if external_access is true
+
+external_access           = true
 
 enter_ami_name            = "ubuntu"
 server_user               = "ubuntu"
@@ -144,40 +129,14 @@ instance_key_name         = "your_region_key"
 
 ## 🧩 Outputs
 
-After a successful apply, Terraform prints the following outputs:
-- `vpc_id_out` – VPC ID  
-- `sg_id_out` – Security Group ID  
-- `instance_id_out` – EC2 Instance ID  
-- `instance_public_ip_out` – EC2 Public IP  
-
-You can view them any time with:
-```bash
-terraform output
-```
-
----
-
-## 🧠 Tips
-
-- To list all workspaces:
-  ```bash
-  terraform workspace list
-  ```
-- To check current workspace:
-  ```bash
-  terraform workspace show
-  ```
-- To update DNS entries, edit:  
-  `scripts/dns_entry.sh`
+After a successful apply, Terraform prints:
+- `vpc_id_out` – VPC ID
+- `sg_id_out` – Security Group ID
+- `instance_id_out` – EC2 Instance ID
+- `instance_public_ip_out` – EC2 Public IP (Empty for private instances)
 
 ---
 
 ## 📜 License
-This project is maintained for DevOps learning and automation.  
+This project is maintained for DevOps learning and automation.
 You can reuse and modify it for your own infrastructure setups.
-
----
-
-**Author:** Vijay Durai  
-**Role:** DevOps & Cloud Engineer ☁️  
-**Purpose:** Reusable Terraform AWS Infrastructure Automation

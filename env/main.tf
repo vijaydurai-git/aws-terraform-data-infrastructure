@@ -41,4 +41,5 @@ module "compute_module" {
   server_user_in               = var.server_user
   instance_root_volume_size_in = var.instance_root_volume_size
   instance_key_name_in         = var.instance_key_name
+  external_access_in           = var.external_access
 }

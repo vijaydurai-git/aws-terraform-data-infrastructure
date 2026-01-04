@@ -84,3 +84,9 @@ variable "instance_key_name" {
 
 }
 
+
+variable "external_access" {
+  description = "Set to true for public instances (external access), false for private instances."
+  type        = bool
+  default     = true
+}

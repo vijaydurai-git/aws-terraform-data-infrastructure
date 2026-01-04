@@ -9,6 +9,12 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+
+  lifecycle {
+        ignore_changes = all
+
+  }
+
   tags = {
 
     Name = "${var.project_tag_in}-${var.sg_tag}"

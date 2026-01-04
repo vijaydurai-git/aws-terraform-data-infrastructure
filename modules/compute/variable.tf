@@ -13,4 +13,6 @@ variable "associate_public_ip_address" {
   default = "true"
 }
 
+
 variable "instance_root_volume_size_in" {}
+variable "external_access_in" {}

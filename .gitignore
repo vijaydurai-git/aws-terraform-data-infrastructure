@@ -3,3 +3,9 @@
 *.tfstate
 *.tfstate.backup
 env/.terraform*
+
+# Ignore all .tfvars files
+*.tfvars
+
+# Except default.tfvars
+!default.tfvars
