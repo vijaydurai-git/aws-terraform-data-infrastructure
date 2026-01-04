@@ -1,6 +1,7 @@
 variable "ami_id_in" {}
 variable "instance_type_in" {}
 variable "public_subnet_id_in" {}
+variable "private_subnet_id_in" {}
 variable "sg_id_in" {}
 variable "project_tag_in" {}
 variable "confirm_dns_update_in" {}

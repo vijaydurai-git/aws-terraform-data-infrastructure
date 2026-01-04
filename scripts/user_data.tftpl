@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Cloud-init script to setup users
+
+%{ for user, key in ssh_users ~}
+echo "Configuring user: ${user}"
+
+# Create User if not exists
+if ! id "${user}" &>/dev/null; then
+    # Create group if not exists
+    groupadd -f tf-users
+    
+    # Create user
+    useradd -m -s /bin/bash -G tf-users "${user}"
+fi
+
+# Add to sudoers for passwordless sudo
+echo "${user} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${user}
+chmod 0440 /etc/sudoers.d/${user}
+
+# Setup SSH Key
+mkdir -p /home/${user}/.ssh
+echo "${key}" > /home/${user}/.ssh/authorized_keys
+chmod 700 /home/${user}/.ssh
+chmod 600 /home/${user}/.ssh/authorized_keys
+chown -R ${user}:${user} /home/${user}/.ssh
+
+echo "Finished configuring user: ${user}"
+%{ endfor ~}

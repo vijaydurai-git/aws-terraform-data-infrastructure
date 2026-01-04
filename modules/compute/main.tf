@@ -61,12 +61,16 @@ resource "aws_instance" "public_instance" {
 resource "aws_instance" "private_instance" {
   count                       = !var.external_access_in ? 1 : 0
   ami                         = var.ami_id_in
-  subnet_id                   = var.public_subnet_id_in
+  subnet_id                   = var.private_subnet_id_in
   instance_type               = var.instance_type_in
   key_name                    = var.instance_key_name_in
   associate_public_ip_address = false
   vpc_security_group_ids      = [var.sg_id_in]
   iam_instance_profile        = var.iam_instance_profile_in
+
+  user_data = templatefile("${path.module}/../../scripts/user_data.tftpl", {
+    ssh_users = var.ssh_users_in
+  })
 
   root_block_device {
     volume_size           = var.instance_root_volume_size_in

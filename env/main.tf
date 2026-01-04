@@ -38,6 +38,7 @@ module "compute_module" {
 
   source                       = "../modules/compute"
   public_subnet_id_in          = module.vpc_module.public_subnet_id_out
+  private_subnet_id_in         = module.vpc_module.private_subnet_id_out
   sg_id_in                     = module.sg_module.sg_id_out
   project_tag_in               = local.current_project_tag
   instance_type_in             = var.instance_type
