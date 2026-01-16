@@ -22,7 +22,6 @@ fi
 # 3. Confirm and Run
 echo "Running terraform $ACTION for $WORKSPACE..."
 echo "Using variables: $TFVARS_FILE"
-echo ""
-read -p "Press Enter to start..."
+echo "...$WORKSPACE..is currently selected workspace"
 
 terraform $ACTION -var-file="$TFVARS_FILE"

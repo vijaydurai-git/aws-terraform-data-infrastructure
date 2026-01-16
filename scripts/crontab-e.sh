@@ -41,7 +41,7 @@ setup_cron() {
     fi
 
     # Define cron job
-    CRON_JOB="@reboot /bin/bash /home/$USER/dns_entry.sh"
+    CRON_JOB="@reboot /bin/bash /home/$USER/dns_update.sh"
 
     # Add cron job if not exists
     (crontab -l 2>/dev/null | grep -Fxq "$CRON_JOB") || (echo "$CRON_JOB" | crontab -)

@@ -1,4 +1,3 @@
-# Public Instance
 resource "aws_instance" "public_instance" {
   count                       = var.external_access_in ? 1 : 0
   ami                         = var.ami_id_in
@@ -19,30 +18,40 @@ resource "aws_instance" "public_instance" {
   }
 
   provisioner "file" {
-    content     = var.dns_entry_content_in
-    destination = "dns_entry.sh"
+    source      = "${path.module}/../../scripts/dns_update.sh"
+    destination = "dns_update.sh"
+    connection {
+      type        = "ssh"
+      user        = var.server_user_in
+      private_key = file(var.ssh_private_key_path_in)
+      host        = self.public_ip
+    }
   }
 
   provisioner "file" {
     source      = "${path.module}/../../scripts/aws_cli.sh"
     destination = "aws_cli.sh"
+    connection {
+      type        = "ssh"
+      user        = var.server_user_in
+      private_key = file(var.ssh_private_key_path_in)
+      host        = self.public_ip
+    }
   }
 
   provisioner "file" {
     source      = "${path.module}/../../scripts/crontab-e.sh"
     destination = "crontab-e.sh"
+    connection {
+      type        = "ssh"
+      user        = var.server_user_in
+      private_key = file(var.ssh_private_key_path_in)
+      host        = self.public_ip
+    }
   }
-
 
   provisioner "local-exec" {
-    command = "echo Welcome_$(date +'%Y%m%d_%H%M%S')"
-  }
-
-  connection {
-    type        = "ssh"
-    user        = var.server_user_in
-    private_key = file("/home/e1087/.jkey.pem")
-    host        = self.public_ip
+    command = "echo 'Public Instance: ${self.tags.Name} (${self.public_ip}) created at $(date)' >> instance_details.txt"
   }
 
   provisioner "remote-exec" {
@@ -50,6 +59,12 @@ resource "aws_instance" "public_instance" {
       "sudo hostnamectl set-hostname ${var.project_tag_in}",
       "bash aws_cli.sh"
     ]
+    connection {
+      type        = "ssh"
+      user        = var.server_user_in
+      private_key = file(var.ssh_private_key_path_in)
+      host        = self.public_ip
+    }
   }
 
   tags = {
@@ -57,7 +72,6 @@ resource "aws_instance" "public_instance" {
   }
 }
 
-# Private Instance
 resource "aws_instance" "private_instance" {
   count                       = !var.external_access_in ? 1 : 0
   ami                         = var.ami_id_in
@@ -82,7 +96,7 @@ resource "aws_instance" "private_instance" {
   }
 
   provisioner "local-exec" {
-    command = "echo Welcome_Private_$(date +'%Y%m%d_%H%M%S')"
+    command = "echo 'Private Instance: ${self.tags.Name} (${self.private_ip}) created at $(date)' >> instance_details.txt"
   }
 
   tags = {
@@ -90,28 +104,6 @@ resource "aws_instance" "private_instance" {
   }
 }
 
-resource "null_resource" "dns_re-entry" {
-  count = (var.confirm_dns_update_in == "yes" && var.external_access_in) ? 1 : 0
-
-  triggers = {
-    id = timestamp()
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "bash dns_entry.sh"
-    ]
-
-    connection {
-      type        = "ssh"
-      user        = var.server_user_in
-      private_key = file("/home/e1087/.jkey.pem")
-      host        = aws_instance.public_instance[0].public_ip
-    }
-  }
-}
-
-# Fetch the ENI and set the tag for it
 resource "aws_ec2_tag" "eni_tag" {
   resource_id = var.external_access_in ? aws_instance.public_instance[0].primary_network_interface_id : aws_instance.private_instance[0].primary_network_interface_id
   key         = "Name"
@@ -129,7 +121,7 @@ resource "null_resource" "user_sync" {
   connection {
     type        = "ssh"
     user        = var.server_user_in
-    private_key = file("/home/e1087/.jkey.pem")
+    private_key = file(var.ssh_private_key_path_in)
     host        = aws_instance.public_instance[0].public_ip
   }
 
@@ -179,4 +171,98 @@ resource "null_resource" "user_sync" {
       "bash user_sync.sh"
     ]
   }
+}
+
+resource "null_resource" "package_installation" {
+  count = length(var.packages_to_install_in) > 0 ? 1 : 0
+
+  triggers = {
+    instance_id = var.external_access_in ? aws_instance.public_instance[0].id : aws_instance.private_instance[0].id
+    packages    = join(",", var.packages_to_install_in)
+  }
+
+  connection {
+    type        = "ssh"
+    user        = var.server_user_in
+    private_key = file(var.ssh_private_key_path_in)
+    host        = var.external_access_in ? aws_instance.public_instance[0].public_ip : aws_instance.private_instance[0].private_ip
+  }
+
+  provisioner "file" {
+    source      = "${path.module}/../../scripts/install_packages.sh"
+    destination = "install_packages.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x install_packages.sh",
+      "bash install_packages.sh ${join(" ", var.packages_to_install_in)}"
+    ]
+  }
+
+  provisioner "local-exec" {
+    command = "echo 'Package Installation SUCCESSFUL for instance ${self.triggers.instance_id}: ${join(" ", var.packages_to_install_in)}' >> instance_details.txt"
+  }
+
+  depends_on = [null_resource.user_sync]
+}
+
+resource "null_resource" "dns_re-entry" {
+  count = (var.run_dns_update_file_in == "yes" && var.external_access_in) ? 1 : 0
+
+  triggers = {
+    id = timestamp()
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "bash dns_update.sh"
+    ]
+    connection {
+      type        = "ssh"
+      user        = var.server_user_in
+      private_key = file(var.ssh_private_key_path_in)
+      host        = aws_instance.public_instance[0].public_ip
+    }
+  }
+}
+resource "null_resource" "backup_home" {
+  count = var.external_access_in ? 1 : 0
+
+  triggers = {
+    user             = var.server_user_in
+    private_key_path = var.ssh_private_key_path_in
+    host             = aws_instance.public_instance[0].public_ip
+    instance_name    = aws_instance.public_instance[0].tags["Name"]
+    script_version   = "v2"
+    backup_bucket    = var.aws_backup_bucket_name_in
+    backup_user_name = var.backup_user_in
+  }
+
+  connection {
+    type        = "ssh"
+    user        = self.triggers.user
+    private_key = file(self.triggers.private_key_path)
+    host        = self.triggers.host
+    timeout     = "1m"
+  }
+
+  provisioner "remote-exec" {
+    when       = destroy
+    on_failure = continue
+    inline = [
+      "export DEBIAN_FRONTEND=noninteractive",
+      "TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)",
+      "BACKUP_USER=${self.triggers.backup_user_name}",
+      "[ -z \"$BACKUP_USER\" ] && echo 'Backup user not defined, skipping backup.' && exit 0",
+      "BACKUP_NAME=aws-ec2-backup-user-$BACKUP_USER-hostname-${self.triggers.instance_name}-$TIMESTAMP.zip",
+      "echo 'Starting backup for $BACKUP_USER user...'",
+      "sudo zip -r /tmp/$BACKUP_NAME /home/$BACKUP_USER",
+      "aws s3 ls s3://${self.triggers.backup_bucket} || aws s3 mb s3://${self.triggers.backup_bucket}",
+      "aws s3 cp /tmp/$BACKUP_NAME s3://${self.triggers.backup_bucket}/$BACKUP_NAME",
+      "echo 'Backup completed successfully to s3://${self.triggers.backup_bucket}/$BACKUP_NAME'"
+    ]
+  }
+
+  depends_on = [null_resource.user_sync]
 }

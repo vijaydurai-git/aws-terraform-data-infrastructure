@@ -22,8 +22,3 @@ output "instance_id_out" {
 }
 
 
-# # Output content of DNS entry file
-# output "dns_entry_content_out" {
-#   description = "Contents of DNS entry script"
-#   value       = local.dns_entry_content
-# }

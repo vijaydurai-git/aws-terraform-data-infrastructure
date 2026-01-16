@@ -1,5 +1,5 @@
-resource "aws_iam_role" "internal_role" {
-  name = "${var.project_tag_in}-internal-role"
+resource "aws_iam_role" "ec2_role" {
+  name = "${var.project_tag_in}-ec2-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -15,21 +15,25 @@ resource "aws_iam_role" "internal_role" {
   })
 
   tags = {
-    Name = "${var.project_tag_in}-internal-role"
+    Name = "${var.project_tag_in}-ec2-role"
   }
 }
 
 resource "aws_iam_role_policy_attachment" "ssm_attach" {
-  role       = aws_iam_role.internal_role.name
+  role       = aws_iam_role.ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 resource "aws_iam_role_policy_attachment" "r53_attach" {
-  role       = aws_iam_role.internal_role.name
+  role       = aws_iam_role.ec2_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
 }
 
-resource "aws_iam_instance_profile" "internal_profile" {
-  name = "${var.project_tag_in}-internal-profile"
-  role = aws_iam_role.internal_role.name
+resource "aws_iam_role_policy_attachment" "admin_attach" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "${var.project_tag_in}-ec2-profile"
+  role = aws_iam_role.ec2_role.name
 }
